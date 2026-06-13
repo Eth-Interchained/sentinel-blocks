@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sentinel Blocks — get structured data out of LLM text, reliably</title>
+<meta name="description" content="A tiny, language-agnostic format for extracting structured payloads from LLM output. Wrap payloads in <<<TAG>>> … <<<END>>> and parse verbatim — no more broken JSON.parse. Ports in 10 languages, GPLv3." />
+<meta property="og:title" content="Sentinel Blocks" />
+<meta property="og:description" content="Get structured data out of LLM text — reliably, in any language." />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0c0e13;
+    --bg-soft: #12151d;
+    --panel: #151926;
+    --line: #232838;
+    --ink: #e9ecf3;
+    --muted: #9aa3b6;
+    --faint: #6b7488;
+    --gold: #f3b04c;
+    --gold-soft: #f3b04c22;
+    --green: #57d08a;
+    --red: #ef6f6f;
+    --radius: 14px;
+    --maxw: 1080px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 600px at 50% -10%, #1a1f2e 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .gold { color: var(--gold); }
+
+  /* nav */
+  header.nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(10px);
+    background: #0c0e13cc;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.2px; }
+  .brand .glyph { color: var(--gold); font-weight: 700; }
+  .nav-links { display: flex; gap: 22px; align-items: center; font-size: 14px; color: var(--muted); font-weight: 500; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta { border: 1px solid var(--line); padding: 7px 14px; border-radius: 9px; color: var(--ink) !important; }
+  .nav-cta:hover { border-color: var(--gold); }
+  @media (max-width: 720px) { .nav-links a.hide-sm { display: none; } }
+
+  /* hero */
+  .hero { padding: 80px 0 40px; }
+  .eyebrow {
+    display: inline-block; font-size: 12.5px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gold); background: var(--gold-soft); border: 1px solid #f3b04c33;
+    padding: 5px 12px; border-radius: 999px; font-weight: 600; margin-bottom: 22px;
+  }
+  h1 { font-size: clamp(34px, 5.4vw, 60px); line-height: 1.04; letter-spacing: -1.4px; margin: 0 0 18px; font-weight: 800; }
+  .lede { font-size: clamp(17px, 2.2vw, 21px); color: var(--muted); max-width: 640px; margin: 0 0 30px; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
+  .btn { padding: 12px 20px; border-radius: 11px; font-weight: 600; font-size: 15px; border: 1px solid transparent; transition: transform .08s ease; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--gold); color: #1a1305; }
+  .btn-primary:hover { background: #ffc164; }
+  .btn-ghost { border-color: var(--line); color: var(--ink); }
+  .btn-ghost:hover { border-color: var(--gold); }
+  .install { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .install code { background: var(--bg-soft); border: 1px solid var(--line); border-radius: 9px; padding: 9px 14px; font-size: 13.5px; color: var(--ink); }
+  .install code .gold { user-select: none; }
+
+  /* code card */
+  .codecard {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; box-shadow: 0 24px 60px -30px #000;
+  }
+  .codecard .bar { display: flex; gap: 7px; padding: 13px 16px; border-bottom: 1px solid var(--line); background: #0f1320; align-items: center; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+  .codecard .bar .fname { margin-left: 10px; font-size: 12.5px; color: var(--faint); }
+  pre { margin: 0; padding: 20px; overflow-x: auto; font-family: "JetBrains Mono", monospace; font-size: 13.5px; line-height: 1.7; }
+  .tok-sent { color: var(--gold); font-weight: 700; }
+  .tok-key { color: #7fb0ff; }
+  .tok-str { color: var(--green); }
+  .tok-com { color: var(--faint); font-style: italic; }
+  .tok-bad { color: var(--red); }
+
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 40px; align-items: center; }
+  @media (max-width: 880px) { .hero-grid { grid-template-columns: 1fr; gap: 30px; } }
+
+  /* sections */
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  .sec-tag { font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: 12px; }
+  h2 { font-size: clamp(24px, 3.2vw, 34px); letter-spacing: -0.8px; margin: 0 0 16px; font-weight: 700; }
+  p.body { color: var(--muted); max-width: 720px; font-size: 16.5px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 820px) { .two { grid-template-columns: 1fr; } }
+
+  /* language grid */
+  .langs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 26px; }
+  @media (max-width: 820px) { .langs { grid-template-columns: repeat(2, 1fr); } }
+  .lang { border: 1px solid var(--line); background: var(--bg-soft); border-radius: 11px; padding: 16px; text-align: center; font-weight: 600; font-size: 14.5px; transition: border-color .12s; }
+  .lang:hover { border-color: var(--gold); }
+  .lang small { display: block; color: var(--faint); font-weight: 500; font-size: 11.5px; margin-top: 4px; }
+
+  /* feature cards */
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 26px; }
+  @media (max-width: 820px) { .cards { grid-template-columns: 1fr; } }
+  .card { border: 1px solid var(--line); background: linear-gradient(180deg, var(--panel), #11141f); border-radius: var(--radius); padding: 22px; }
+  .card h3 { margin: 0 0 8px; font-size: 17px; }
+  .card h3 .num { color: var(--gold); font-family: "JetBrains Mono", monospace; margin-right: 8px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+  /* rules */
+  .rules { counter-reset: r; margin-top: 24px; display: grid; gap: 14px; }
+  .rule { display: flex; gap: 16px; align-items: flex-start; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; background: var(--bg-soft); }
+  .rule .n { counter-increment: r; }
+  .rule .n::before { content: counter(r); font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--gold); background: var(--gold-soft); border: 1px solid #f3b04c33; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; flex: 0 0 34px; }
+  .rule div.t strong { display: block; margin-bottom: 2px; }
+  .rule div.t span { color: var(--muted); font-size: 14.5px; }
+
+  footer { border-top: 1px solid var(--line); padding: 40px 0 60px; color: var(--faint); font-size: 14px; }
+  footer .frow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: center; }
+  footer a { color: var(--muted); } footer a:hover { color: var(--ink); }
+  .shield { color: var(--faint); }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand"><span class="glyph mono">&lt;&lt;&lt;</span> Sentinel Blocks <span class="glyph mono">&gt;&gt;&gt;</span></div>
+    <nav class="nav-links">
+      <a class="hide-sm" href="#problem">Problem</a>
+      <a class="hide-sm" href="#format">Format</a>
+      <a class="hide-sm" href="#languages">Languages</a>
+      <a href="https://github.com/Eth-Interchained/sentinel-blocks/blob/main/SPEC.md">Spec</a>
+      <a class="nav-cta" href="https://github.com/Eth-Interchained/sentinel-blocks">GitHub →</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Format spec v1.0 · 10 languages · GPLv3</span>
+      <h1>Get structured data out of<br>LLM text — <span class="gold">reliably</span>.</h1>
+      <p class="lede">Teach the model to wrap each payload between unmistakable markers, then extract it with one pass that <strong>never re-parses content as code</strong>. It survives the quotes, newlines, backticks, and braces that shatter a naive <span class="mono">JSON.parse</span>.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/Eth-Interchained/sentinel-blocks">View on GitHub</a>
+        <a class="btn btn-ghost" href="https://github.com/Eth-Interchained/sentinel-blocks/blob/main/SPEC.md">Read the spec</a>
+      </div>
+      <div class="install">
+        <code class="mono"><span class="gold">$</span> npm install sentinel-blocks</code>
+        <code class="mono"><span class="gold">$</span> pip install sentinel-blocks</code>
+      </div>
+    </div>
+    <div class="codecard">
+      <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname mono">completion.txt</span></div>
+<pre class="mono"><span class="tok-sent">&lt;&lt;&lt;JSON&gt;&gt;&gt;</span>
+{ <span class="tok-key">"summary"</span>: <span class="tok-str">"one object, verbatim"</span>, <span class="tok-key">"ok"</span>: true }
+<span class="tok-sent">&lt;&lt;&lt;END&gt;&gt;&gt;</span>
+
+<span class="tok-sent">&lt;&lt;&lt;FILE src/app.ts&gt;&gt;&gt;</span>
+export const greet = (n) =&gt; `hi ${n}`;
+<span class="tok-com">// code lives OUTSIDE the JSON ↑</span>
+<span class="tok-sent">&lt;&lt;&lt;END&gt;&gt;&gt;</span></pre>
+    </div>
+  </div>
+</section>
+
+<section id="problem">
+  <div class="wrap two">
+    <div>
+      <div class="sec-tag">The problem</div>
+      <h2>One stray brace and the parse dies</h2>
+      <p class="body">You ask a model for JSON. It mostly complies — until a value contains a quote, a newline, or a code snippet. Then your pipeline falls back to a mock, retries, or crashes. The root cause is almost always <strong>code stuffed into a JSON string</strong>.</p>
+    </div>
+    <div class="codecard">
+      <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname mono">the 2 a.m. bug</span></div>
+<pre class="mono">{ <span class="tok-key">"code"</span>: <span class="tok-str">"const re = /\{.*\}/;"</span> }
+<span class="tok-bad">                  ▲  JSON.parse →</span>
+<span class="tok-bad">  SyntaxError: Expected ',' or '}'</span>
+<span class="tok-bad">  in JSON at position 11693</span></pre>
+    </div>
+  </div>
+</section>
+
+<section id="format">
+  <div class="wrap">
+    <div class="sec-tag">The idea</div>
+    <h2>Mark the boundary. Take the contents verbatim.</h2>
+    <p class="body">Stop fighting the escaping. Wrap each payload between sentinels and read the bytes between them untouched. Quotes, braces, and newlines inside a block are harmless because the block is never interpreted as code. Name a block to carry its own argument — a path, an id, a language.</p>
+    <div class="cards">
+      <div class="card">
+        <h3>Tag-only</h3>
+        <p class="mono" style="color:var(--ink)"><span class="gold">&lt;&lt;&lt;JSON&gt;&gt;&gt;</span> … <span class="gold">&lt;&lt;&lt;END&gt;&gt;&gt;</span></p>
+        <p style="margin-top:10px">A single payload, extracted whole and trimmed.</p>
+      </div>
+      <div class="card">
+        <h3>Named</h3>
+        <p class="mono" style="color:var(--ink)"><span class="gold">&lt;&lt;&lt;FILE src/app.ts&gt;&gt;&gt;</span> … <span class="gold">&lt;&lt;&lt;END&gt;&gt;&gt;</span></p>
+        <p style="margin-top:10px">Carries an argument; emit one per file, verbatim.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <div class="sec-tag">Why it works</div>
+    <h2>Boring on purpose</h2>
+    <div class="cards">
+      <div class="card"><h3><span class="num">01</span>Verbatim out</h3><p>Extraction returns the bytes between the markers untouched — no input can trigger parser edge cases on the way out.</p></div>
+      <div class="card"><h3><span class="num">02</span>Code leaves the JSON</h3><p>The most common <span class="mono">JSON.parse</span> failure — unescaped code in a string — is designed out, not patched up.</p></div>
+      <div class="card"><h3><span class="num">03</span>Rare markers</h3><p><span class="mono">&lt;&lt;&lt;</span> / <span class="mono">&gt;&gt;&gt;</span> almost never occur in prose or code, so they survive markdown, diffs, and token streaming.</p></div>
+      <div class="card"><h3><span class="num">04</span>Honest fallback</h3><p>The JSON entry point tries the block, a light repair, then a balanced-brace slice — and fails loudly. It never fabricates.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="strategy">
+  <div class="wrap">
+    <div class="sec-tag">The strategy</div>
+    <h2>Three rules for the prompt</h2>
+    <p class="body">The format only pays off if the model emits it. Tell it:</p>
+    <div class="rules">
+      <div class="rule"><span class="n"></span><div class="t"><strong>Reply only in sentinel blocks.</strong><span>Nothing before the first block or after the last.</span></div></div>
+      <div class="rule"><span class="n"></span><div class="t"><strong>JSON carries data, never code.</strong><span>No source, no markdown fences inside the JSON block.</span></div></div>
+      <div class="rule"><span class="n"></span><div class="t"><strong>Code gets its own block.</strong><span>Files and long text go in named <span class="mono">&lt;&lt;&lt;FILE&gt;&gt;&gt;</span> blocks, verbatim.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="languages">
+  <div class="wrap">
+    <div class="sec-tag">One format, ten tongues</div>
+    <h2>Drop-in ports, identical behavior</h2>
+    <p class="body">Every implementation passes the same 8-invariant conformance suite. npm and PyPI for the big two; a single dependency-free file for the rest.</p>
+    <div class="langs">
+      <div class="lang">TypeScript<small>npm</small></div>
+      <div class="lang">JavaScript<small>.mjs · .cjs</small></div>
+      <div class="lang">Python<small>PyPI</small></div>
+      <div class="lang">Go<small>RE2-safe scan</small></div>
+      <div class="lang">Rust<small>zero-dep</small></div>
+      <div class="lang">C<small>C99</small></div>
+      <div class="lang">C++<small>header-only</small></div>
+      <div class="lang">Java<small>17</small></div>
+      <div class="lang">Ruby<small>stdlib</small></div>
+      <div class="lang">PHP<small>8.x</small></div>
+    </div>
+  </div>
+</section>
+
+<section id="quickstart">
+  <div class="wrap">
+    <div class="sec-tag">Quickstart</div>
+    <h2>Two lines to robust parsing</h2>
+    <div class="two" style="margin-top:24px">
+      <div class="codecard">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname mono">TypeScript</span></div>
+<pre class="mono"><span class="tok-key">import</span> { jsonFromResponse, extractTaggedBlocks }
+  <span class="tok-key">from</span> <span class="tok-str">"sentinel-blocks"</span>;
+
+<span class="tok-key">const</span> meta = jsonFromResponse(reply);
+<span class="tok-com">// never breaks on code-in-string</span>
+<span class="tok-key">for</span> (<span class="tok-key">const</span> { arg, content } <span class="tok-key">of</span>
+     extractTaggedBlocks(reply, <span class="tok-str">"FILE"</span>)) {
+  writeFileSync(arg, content);
+}</pre>
+      </div>
+      <div class="codecard">
+        <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname mono">Python</span></div>
+<pre class="mono"><span class="tok-key">from</span> sentinel_blocks <span class="tok-key">import</span> (
+    json_from_response, extract_tagged_blocks)
+
+meta = json_from_response(reply)
+<span class="tok-com"># dict; raises only if nothing parses</span>
+<span class="tok-key">for</span> arg, content <span class="tok-key">in</span> \
+        extract_tagged_blocks(reply, <span class="tok-str">"FILE"</span>):
+    open(arg, <span class="tok-str">"w"</span>).write(content)</pre>
+      </div>
+    </div>
+    <div class="cta-row" style="margin-top:28px">
+      <a class="btn btn-primary" href="https://github.com/Eth-Interchained/sentinel-blocks">Get started on GitHub</a>
+      <a class="btn btn-ghost" href="https://github.com/Eth-Interchained/sentinel-blocks/blob/main/docs/PROMPTING.md">Prompting guide</a>
+      <a class="btn btn-ghost" href="https://github.com/Eth-Interchained/sentinel-blocks/blob/main/LORE.md">The lore 🛡️</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap frow">
+    <div>
+      <div class="brand" style="margin-bottom:8px"><span class="glyph mono">&lt;&lt;&lt;</span> Sentinel Blocks <span class="glyph mono">&gt;&gt;&gt;</span></div>
+      <div class="shield">GPL-3.0-or-later · distilled from <a href="https://github.com/aiassistsecure/keystone-lite">KeyStone-Lite</a> · part of <a href="https://github.com/Eth-Interchained">Interchained</a></div>
+    </div>
+    <nav class="nav-links">
+      <a href="https://github.com/Eth-Interchained/sentinel-blocks">GitHub</a>
+      <a href="https://github.com/Eth-Interchained/sentinel-blocks/blob/main/SPEC.md">Spec</a>
+      <a href="https://www.npmjs.com/package/sentinel-blocks">npm</a>
+      <a href="https://pypi.org/project/sentinel-blocks/">PyPI</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>

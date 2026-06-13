@@ -13,6 +13,8 @@ newlines, backticks, and braces that shatter a naive `JSON.parse`.
 ![spec v1.0](https://img.shields.io/badge/spec-v1.0-informational)
 ![languages](https://img.shields.io/badge/languages-10-success)
 
+**[🌐 Website & guide → eth-interchained.github.io/sentinel-blocks](https://eth-interchained.github.io/sentinel-blocks/)**
+
 </div>
 
 ```
