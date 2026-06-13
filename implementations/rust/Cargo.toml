@@ -1,0 +1,16 @@
+[package]
+name = "sentinel-blocks"
+version = "1.0.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+description = "Robust extraction of structured payloads from LLM output via sentinel blocks (<<<TAG>>> … <<<END>>>)."
+repository = "https://github.com/Eth-Interchained/sentinel-blocks"
+keywords = ["llm", "json", "parser", "prompt-engineering", "structured-output"]
+categories = ["parsing", "text-processing"]
+
+[lib]
+name = "sentinel_blocks"
+path = "src/lib.rs"
+
+# Zero dependencies on purpose — the scanner is hand-rolled.
+[dependencies]

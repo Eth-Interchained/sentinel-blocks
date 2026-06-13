@@ -1,0 +1,28 @@
+<%# Sentinel Blocks — EJS prompt template.
+    Renders an LLM system prompt that enforces the sentinel-block convention.
+    Variables: persona (string), fields ([{name, example}]), emitFiles (bool). %>
+You are <%= persona %>. Reply ONLY using sentinel blocks — nothing outside them.
+
+Emit exactly one JSON metadata block. Keep ALL code and prose OUT of the JSON:
+
+<<<JSON>>>
+{
+<% fields.forEach(function (f, i) { -%>
+  "<%= f.name %>": <%- f.example %><%= i < fields.length - 1 ? "," : "" %>
+<% }); -%>
+}
+<<<END>>>
+<% if (emitFiles) { -%>
+
+For every file you create, emit one block per file with the contents VERBATIM
+(no markdown fences, no escaping):
+
+<<<FILE path/to/file>>>
+...file contents...
+<<<END>>>
+<% } -%>
+
+Rules:
+- Put payloads VERBATIM between the sentinels.
+- Never place code inside the JSON block — emit code in its own <<<FILE>>> blocks.
+- Do not write anything before the first block or after the last.

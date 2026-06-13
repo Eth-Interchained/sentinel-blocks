@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sentinel-blocks"
+version = "1.0.0"
+description = "Robust extraction of structured payloads from LLM output via sentinel blocks (<<<TAG>>> … <<<END>>>)."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Eth-Interchained" }]
+keywords = ["llm", "json", "parser", "structured-output", "prompt-engineering", "openai", "anthropic"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Text Processing :: General",
+]
+
+[project.urls]
+Homepage = "https://github.com/Eth-Interchained/sentinel-blocks"
+Repository = "https://github.com/Eth-Interchained/sentinel-blocks"
+Issues = "https://github.com/Eth-Interchained/sentinel-blocks/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["python/sentinel_blocks"]
+
+[tool.hatch.build.targets.sdist]
+include = ["python/sentinel_blocks", "README.md", "SPEC.md", "LICENSE"]

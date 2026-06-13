@@ -1,0 +1,58 @@
+{
+  "name": "sentinel-blocks",
+  "version": "1.0.0",
+  "description": "Robust extraction of structured payloads from LLM output via sentinel blocks (<<<TAG>>> … <<<END>>>). Survives quotes, newlines, and braces that shatter a naive JSON.parse.",
+  "keywords": [
+    "llm",
+    "json",
+    "parser",
+    "structured-output",
+    "prompt-engineering",
+    "openai",
+    "anthropic",
+    "ai",
+    "function-calling",
+    "robust-parsing"
+  ],
+  "license": "GPL-3.0-or-later",
+  "author": "Eth-Interchained",
+  "homepage": "https://github.com/Eth-Interchained/sentinel-blocks#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eth-Interchained/sentinel-blocks.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Eth-Interchained/sentinel-blocks/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "SPEC.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node tests/test_core.mjs && node tests/test_core.cjs",
+    "test:ts": "tsx tests/test_core.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false
+}
