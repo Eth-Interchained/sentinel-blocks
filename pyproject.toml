@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sentinel-blocks"
-version = "1.0.1"
+version = "1.0.2"
 description = "Robust extraction of structured payloads from LLM output via sentinel blocks (<<<TAG>>> … <<<END>>>)."
 readme = "README.md"
 requires-python = ">=3.8"

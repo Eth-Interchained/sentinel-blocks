@@ -43,7 +43,7 @@ __all__ = [
     "json_from_response",
 ]
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 # The sentinel delimiters, exposed for tooling that builds prompts.
 OPEN = "<<<"
