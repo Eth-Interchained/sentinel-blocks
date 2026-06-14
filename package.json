@@ -1,6 +1,6 @@
 {
   "name": "sentinel-blocks",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Robust extraction of structured payloads from LLM output via sentinel blocks (<<<TAG>>> … <<<END>>>). Survives quotes, newlines, and braces that shatter a naive JSON.parse.",
   "keywords": [
     "llm",

@@ -24,7 +24,7 @@
  */
 
 /** Library version (kept in sync with package.json). */
-export const VERSION = "1.0.0";
+export const VERSION = "1.0.1";
 
 /** The sentinel delimiters, exposed for tooling that builds prompts. */
 export const OPEN = "<<<";
